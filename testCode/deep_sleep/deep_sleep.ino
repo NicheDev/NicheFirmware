@@ -1,3 +1,5 @@
+// In order to wake up the device after sleep mode automatically, gpio16 has to be connected to rst pin on ESP. 
+
 void setup() 
 {
   Serial.begin(115200);
