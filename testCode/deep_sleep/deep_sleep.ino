@@ -3,7 +3,7 @@
 void setup() 
 {
   Serial.begin(115200);
-  delay(3000);
+  delay(2000);
 
   // Wait for serial to initialize.
   while(!Serial) { }
@@ -15,6 +15,7 @@ void setup()
 void loop() 
 {
   Serial.println("Going into deep sleep for 5 seconds");
-  ESP.deepSleep(5e6); // usecends
+  ESP.deepSleep(10e6); // usecends
+  Serial.println("Deep Sleep is Over");
   
 }
