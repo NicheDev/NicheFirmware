@@ -7,6 +7,7 @@
 #include <VL53L0X.h>              // ToF sensor
 #include "Wire.h"                 // I2c library
 
+
 LIS3DH myIMU(I2C_MODE, 0x18); //Default constructor is I2C, addr 0x19.
 ESP8266WiFiMulti WiFiMulti;
 VL53L0X sensor;
@@ -15,146 +16,40 @@ VL53L0X sensor;
 const int RED = 14;
 const int GREEN = 12;
 const int BLUE = 13;
-//const int ToF_Xshut = 9;
-const int jar_type1 = 191;  //empty jar length in mm
+//const int ToF_Xshut = D5;
+const int jar_type1 = 180;  //empty jar length in mm
 String sss;
 
 int d0 = 0, d1 = 0, d2 = 0; //distances for sensor readout
 bool stableD = false;
 int read_v = 0;
 
-void setup()
-{
+
+void setup() {
   Serial.begin(115200);
   Serial.println(" Hey - Good morning !!! \n\n\n ");
   delay(1000); //relax...
-  Wire.begin();
-
-  
-  // set the LED pins as output
-  //pinMode(RED, OUTPUT);
-  //pinMode(GREEN, OUTPUT);
-  //pinMode(BLUE, OUTPUT);
- // pinMode(ToF_Xshut, OUTPUT);
-
-  // you can add as many wifi as you want here: name and password
-  WiFi.mode(WIFI_STA);
-    WiFiMulti.addAP("Verizon-SM-G950U-A968", "qihanhan");
-  WiFiMulti.addAP("Device-Northwestern", "");
-  WiFiMulti.addAP("A.selman.K iPhone", "pass12345");
-  WiFiMulti.addAP("1321", "8478047707");
-
-  
-
-  uint8_t dataRead;
-  myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);//cleared by reading
-  init_accel();
-  configAccIntterupts_lookUp(); //looking up orientation detection
-  Serial.println("Exiting Setup");
+  pinMode(LED_BUILTIN, OUTPUT);
+    init_accel();
+    configAccIntterupts_lookUp(); //looking up orientation detection
 }
 
-void loop()
-{
+void loop() {
   uint8_t dataRead;
   myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);//cleared by reading
 
   
   if (dataRead & 0x20) //device is looking up!
   {
-    Serial.println("device is looking down!   "); //  "Z high"
-    if (!stableD)
-    {
-      // measure some distances :)
-      init_sensor();
-      read_v = sensor.readRangeSingleMillimeters();
-      
-      stableD  = distances(read_v);
-      Serial.print(read_v);
-      Serial.print("    -  ");
-      Serial.print(stableD);
-      Serial.print("  -  ");
-      Serial.print(d0);
-      Serial.print("  -  ");
-      Serial.print(d1);
-      Serial.print("  -  ");
-      Serial.println(d2);
-      turnOff_sensor();
-      delay(3 * 1000); // for safety - we dont want very quick measurments on the wrong position
-    }
-    else
-    {
-      Serial.println("== Searching for WiFi... =="); 
-      delay(500);
-      if ((WiFiMulti.run() == WL_CONNECTED)) // wait for WiFi connection
-      {
-        Serial.println("CONNECTED"); full_blink(); // blink if connected
-
-        // generate uniq ID for device registration and sent to the server.
-        String message = device_reg_json(String(ESP.getChipId()));
-        //Serial.println(message);
-        //Serial.println(sss);
-
-        int percent = -1;
-        if ( read_v <= jar_type1 )
-          percent = (( jar_type1 - read_v ) * 100 / jar_type1) ;
-        else
-          percent = -1;
-        // sent distance and percentage to the server:
-        message = sent_data_json(String(ESP.getChipId()), read_v, percent);
-        //Serial.println(message);
-        blink_level( percent  );  // blink the LED with respect to percentage of jar.
-
-
-        Serial.println(" \n\n\n\n\n --------- ");
-
-        if (sss == "23") // all is well
-        { // go to sleep
-          configAccIntterupts_wake();
-
-          Serial.println("Going into deep sleep");
-          delay(2000);
-          ESP.deepSleep(5e6); // u secends // equals to 5 sec
-
-          // since we are not using wake up from timer, esp will wait for acc interrupt
-          // it will fire only when the device is upside down
-
-        }
-        else Serial.println(" CLOUD CONNECTION ERROR!!! MARK, WHATS GOING ON MAN :D");
-
-      }
-    }
+    Serial.println("I am looking up!");
+    configAccIntterupts_wake();
   }
-  else Serial.println(" Please put me back to the jar !!!");
+    
+  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);                       // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000);                       // wait for a second
 
-
-}
-
-
-
-
-const int diffLimit = 5; //cm
-bool distances(int dist)
-{ //error values : 65535 and bigger than jar height
-  d0 = d1;
-  d1 = d2;
-  d2 = dist;
-
-  if (abs(d0 - d1) < 5 && abs(d0 - d2) < 5 && abs(d1 - d2) < 5 && dist < jar_type1 && dist != 65535) return true;
-  else return false;
-}
-
-
-void init_sensor()
-{
-  //digitalWrite(ToF_Xshut, HIGH);
-  sensor.init();
-  sensor.setTimeout(500);
-  //sensor.startContinuous();
-}
-
-void turnOff_sensor()
-{
-  //digitalWrite(ToF_Xshut, LOW);
 }
 
 
@@ -175,6 +70,7 @@ void init_accel()
   uint8_t dataRead;
   myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);   //cleared by reading
 }
+
 
 
 void configAccIntterupts_lookUp()
@@ -204,7 +100,7 @@ void configAccIntterupts_lookUp()
   dataToWrite = 0;
   //minimum duration of the interrupt
   //LSB equals 1/(sample rate)
-  dataToWrite |= 0x14; // 20 * 1/50 s = 400ms
+  dataToWrite |= 0x00; // 20 * 1/50 s = 400ms
   myIMU.writeRegister(LIS3DH_INT1_DURATION, dataToWrite);
 
   //LIS3DH_CLICK_CFG
@@ -284,13 +180,10 @@ void configAccIntterupts_lookUp()
   //dataToWrite |= 0x80; //Click int on pin 2
   //dataToWrite |= 0x40; //Generator 1 interrupt on pin 2
   //dataToWrite |= 0x10; //boot status on pin 2
- // dataToWrite |= 0x02; //invert both outputs
+  dataToWrite |= 0x02; //invert both outputs
   myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
-
 }
 
-
-//////////////////////////////////////////////////////////////////
 
 
 void configAccIntterupts_wake()
@@ -302,13 +195,15 @@ void configAccIntterupts_wake()
   dataToWrite |= 0x40;//6D, 0 = interrupt source, 1 = 6 direction source
   //Set these to enable individual axes of generation source (or direction)
   // -- high and low are used generically
-  //dataToWrite |= 0x20;//Z high
-  dataToWrite |= 0x10;//Z low
+  dataToWrite |= 0x20;//Z high
+  //dataToWrite |= 0x10;//Z low
   //dataToWrite |= 0x08;//Y high
   //dataToWrite |= 0x04;//Y low
   //dataToWrite |= 0x02;//X high
   //dataToWrite |= 0x01;//X low
   myIMU.writeRegister(LIS3DH_INT1_CFG, dataToWrite);
+  //myIMU.writeRegister(0x30, 0x2A); //Write 2Ah into INT1_CFG;          // Enable XLIE, YLIE, ZLIE interrupt generation, OR logic.
+
 
   //LIS3DH_INT1_THS
   dataToWrite = 0;
@@ -320,7 +215,7 @@ void configAccIntterupts_wake()
   dataToWrite = 0;
   //minimum duration of the interrupt
   //LSB equals 1/(sample rate)
-  dataToWrite |= 0x01; // 1 * 1/50 s = 20ms // 0x14 20 * 1/50 s = 400ms
+  dataToWrite |= 0x00; // 1 * 1/50 s = 20ms // 0x14 20 * 1/50 s = 400ms
   myIMU.writeRegister(LIS3DH_INT1_DURATION, dataToWrite);
 
   //LIS3DH_CLICK_CFG
@@ -400,136 +295,6 @@ void configAccIntterupts_wake()
   //dataToWrite |= 0x80; //Click int on pin 2
   //dataToWrite |= 0x40; //Generator 1 interrupt on pin 2
   //dataToWrite |= 0x10; //boot status on pin 2
- // dataToWrite |= 0x02; //invert both outputs
+  dataToWrite |= 0x02; //invert both outputs
   myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
-
-}
-
-
-// json formatter functions:
-
-String device_reg_json(String nameOfDevice)
-{
-  DynamicJsonBuffer JSONbuffer;
-  JsonObject& root = JSONbuffer.createObject();
-
-  root["device_id"] = nameOfDevice;
-
-  JsonObject& shadow_metadata = root.createNestedObject("shadow_metadata");
-
-  root["alert_level"] = 50;
-  root["container"] = "1";
-  root["alias"] = "cash";
-  root["auto_order_store"] = "";
-
-  JsonObject& product_metadata = root.createNestedObject("product_metadata");
-  product_metadata["product_name"] = "rice";
-  product_metadata["product_url"] = "https://images-na.ssl-images-amazon.com/images/I/519b1BFheAL.jpg";
-  product_metadata["product_price"] = "18.25";
-  product_metadata["product_quantity"] = "12";
-
-  char JSONmessageBuffer[500];
-  root.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
-
-  // send this string to the server and read the reply
-  HTTPClient http;
-  http.begin("http://ec2-52-27-165-225.us-west-2.compute.amazonaws.com/device/register");
-  http.addHeader("Content-Type", "application/json");
-  http.POST(JSONmessageBuffer);
-  http.writeToStream(&Serial);
-  Serial.println("\nRegistration over.\n\n");
-  http.end();
-
-  return JSONmessageBuffer;
-}
-
-String sent_data_json(String nameOfDevice, int value, int percent)
-{
-  DynamicJsonBuffer JSONbuffer;
-  JsonObject& root = JSONbuffer.createObject();
-
-  root["device_id"] = nameOfDevice;
-  JsonObject& metadata = root.createNestedObject("metadata");
-  metadata["value"] = value;
-  metadata["percent"] = percent;
-
-  char JSONmessageBuffer[300];
-  root.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
-
-  // send this string to the server and read the reply
-  HTTPClient http;
-  http.begin("http://ec2-52-27-165-225.us-west-2.compute.amazonaws.com/device");
-  http.addHeader("Content-Type", "application/json");
-  http.POST(JSONmessageBuffer);
-  sss = http.writeToStream(&Serial);
-  Serial.println("\n\n\n");
-  http.end();
-
-  return JSONmessageBuffer;
-}
-
-// LED functions:
-
-// blink the LED in specific colour
-void red_blink()
-{
-  analogWrite(RED, 0);
-  analogWrite(GREEN, 1023);
-  analogWrite(BLUE, 1023);
-  delay (500);
-  analogWrite(RED, 1023);
-  analogWrite(GREEN, 1023);
-  analogWrite(BLUE, 1023);
-  delay (250);
-}
-
-// blink the LED in specific colour
-void green_blink()
-{
-  analogWrite(RED, 1023);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE, 1023);
-  delay (500);
-  analogWrite(RED, 1023);
-  analogWrite(GREEN, 1023);
-  analogWrite(BLUE, 1023);
-  delay (250);
-}
-
-// blink the LED in specific colour
-void blue_blink()
-{
-  analogWrite(RED, 1023);
-  analogWrite(GREEN, 1023);
-  analogWrite(BLUE, 0);
-  delay (500);
-  analogWrite(RED, 1023);
-  analogWrite(GREEN, 1023);
-  analogWrite(BLUE, 1023);
-  delay (250);
-}
-
-// blink the LED
-void full_blink()
-{
-  analogWrite(RED, 0);
-  analogWrite(GREEN, 0);
-  analogWrite(BLUE, 0);
-  delay (500);
-  analogWrite(RED, 1023);
-  analogWrite(GREEN, 1023);
-  analogWrite(BLUE, 1023);
-  delay (250);
-}
-
-// you can adjust LED colour for any level
-void blink_level(int percent)
-{
-  if (percent < 25)
-    red_blink();
-  else if (percent < 50)
-    blue_blink();
-  else if (percent < 80)
-    green_blink();
-  else full_blink();
 }

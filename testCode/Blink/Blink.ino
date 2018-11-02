@@ -14,7 +14,7 @@ int ledPin = 10;
 
 
 void setup() {
-  pinMode(ledPin, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
+ // pinMode(ledPin, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
 
 }

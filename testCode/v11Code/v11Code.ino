@@ -6,9 +6,11 @@
 #include <Wire.h>
 #include <VL53L0X.h>
 #define USE_SERIAL Serial
+
 ESP8266WiFiMulti WiFiMulti;
 VL53L0X sensor;
 int jar_type1 = 240;  //empty jar length in mm
+
 void setup() {
   USE_SERIAL.begin(115200);
   // USE_SERIAL.setDebugOutput(true);
@@ -30,7 +32,7 @@ void setup() {
   //WiFiMulti.addAP("Device-Northwestern", "");
   //WiFiMulti.addAP("Arkadas cafe", "0064669918");
   WiFiMulti.addAP("Verizon-SM-G950U-A968", "qihanhan");
-  
+
   delay(3000);
   // wait for WiFi connection
   if ((WiFiMulti.run() == WL_CONNECTED)) {
