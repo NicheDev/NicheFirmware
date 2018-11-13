@@ -17,6 +17,9 @@ LIS3DH myIMU(I2C_MODE, 0x18); //Default constructor is I2C, addr 0x19.
 ESP8266WiFiMulti WiFiMulti;
 VL53L0X sensor;
 
+// Setup ADC to read Vin
+ADC_MODE(ADC_VCC);
+
 // these are LED pins
 const int RED = 12;
 const int GREEN = 13;
@@ -106,9 +109,11 @@ void loop()
           percent = (( jar_type1 - read_v ) * 100 / jar_type1) ;
         else
           percent = -1;
+        int vcc = 0;
+        vcc = ESP.getVcc();
         // sent distance and percentage to the server:
-        message = sent_data_json(String(ESP.getChipId()), read_v, percent);
-        //Serial.println(message);
+        message = sent_data_json(String(ESP.getChipId()), read_v, percent, vcc);
+        Serial.println(message);
         //blink_level( percent  );  // blink the LED with respect to percentage of jar.
 
 
@@ -449,7 +454,7 @@ String device_reg_json(String nameOfDevice)
   return JSONmessageBuffer;
 }
 
-String sent_data_json(String nameOfDevice, int value, int percent)
+String sent_data_json(String nameOfDevice, int value, int percent, int vcc)
 {
   DynamicJsonBuffer JSONbuffer;
   JsonObject& root = JSONbuffer.createObject();
@@ -458,6 +463,7 @@ String sent_data_json(String nameOfDevice, int value, int percent)
   JsonObject& metadata = root.createNestedObject("metadata");
   metadata["value"] = value;
   metadata["percent"] = percent;
+  metadata["vcc"] = vcc;
 
   char JSONmessageBuffer[300];
   root.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
