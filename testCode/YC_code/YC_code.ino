@@ -21,7 +21,6 @@ void setup() {
   Wire.begin();
   sensor.init();
   sensor.setTimeout(500);
-  sensor.startContinuous();
   USE_SERIAL.println();
   USE_SERIAL.println();
   USE_SERIAL.println();
@@ -43,6 +42,7 @@ void setup() {
   //WiFiMulti.addAP("Device-Northwestern", "");
   //WiFiMulti.addAP("Arkadas cafe", "0064669918");
   WiFiMulti.addAP("Verizon-SM-G950U-A968", "qihanhan");
+  WiFiMulti.addAP("EnesUmurGokcek", "chrisdatsikas");
 
   delay(3000);
   // wait for WiFi connection
@@ -64,12 +64,12 @@ void loop()
   // wait for WiFi connection
   if ((WiFiMulti.run() == WL_CONNECTED)) {
     uint8_t dataRead;
-    myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);//cleared by reading
-    if (dataRead & 0x10) //device is in the jar!
-    {
-      Serial.println("The Lid is Off!");
+  //  myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);//cleared by reading
+  //  if (dataRead & 0x10) //device is in the jar!
+  //  {
+ //     Serial.println("The Lid is Off!");
       //configAccIntterupts_wake();
-        analogWrite(BLUE, LOW);
+        digitalWrite(BLUE, LOW);
 
       delay(1000);
         digitalWrite(BLUE, HIGH);
@@ -91,7 +91,7 @@ void loop()
       http.POST(JSONmessageBuffer);
       http.writeToStream(&Serial); Serial.println("\n\n\n");
       http.end();
-    }
+  //  }
     Serial.println("here!");
   }
   Serial.println("no wifi");
@@ -205,7 +205,7 @@ void configAccIntterupts_LidOff()
   //dataToWrite |= 0x80; //Click int on pin 2
   //dataToWrite |= 0x40; //Generator 1 interrupt on pin 2
   //dataToWrite |= 0x10; //boot status on pin 2
-  dataToWrite |= 0x02; //invert both outputs
+  //dataToWrite |= 0x02; //invert both outputs
   myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
 }
 

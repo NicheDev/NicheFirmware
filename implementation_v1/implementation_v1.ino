@@ -1,3 +1,9 @@
+/* Project Niche
+   November 2018
+   Copyright (c) 2018
+   Selman and Chris
+*/
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>          // Wifi library
 #include <ESP8266WiFiMulti.h>     // Try multiple Wifi
@@ -12,13 +18,14 @@ ESP8266WiFiMulti WiFiMulti;
 VL53L0X sensor;
 
 // these are LED pins
-const int RED = 14;
-const int GREEN = 12;
-const int BLUE = 13;
+const int RED = 12;
+const int GREEN = 13;
+const int BLUE = 14;
 //const int ToF_Xshut = 9;
 const int jar_type1 = 191;  //empty jar length in mm
 String sss;
 
+// global variables for sensors
 int d0 = 0, d1 = 0, d2 = 0; //distances for sensor readout
 bool stableD = false;
 int read_v = 0;
@@ -30,44 +37,43 @@ void setup()
   delay(1000); //relax...
   Wire.begin();
 
-  
+
   // set the LED pins as output
   //pinMode(RED, OUTPUT);
-  //pinMode(GREEN, OUTPUT);
+  pinMode(GREEN, OUTPUT);
+  analogWrite(GREEN, 1023);
   //pinMode(BLUE, OUTPUT);
- // pinMode(ToF_Xshut, OUTPUT);
+  // pinMode(ToF_Xshut, OUTPUT);
 
   // you can add as many wifi as you want here: name and password
   WiFi.mode(WIFI_STA);
-    WiFiMulti.addAP("Verizon-SM-G950U-A968", "qihanhan");
+  WiFiMulti.addAP("Verizon-SM-G950U-A968", "qihanhan");
   WiFiMulti.addAP("Device-Northwestern", "");
   WiFiMulti.addAP("A.selman.K iPhone", "pass12345");
   WiFiMulti.addAP("1321", "8478047707");
+  WiFiMulti.addAP("EnesUmurGokcek", "chrisdatsikas");
 
-  
 
   uint8_t dataRead;
   myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);//cleared by reading
   init_accel();
-  configAccIntterupts_lookUp(); //looking up orientation detection
+  configAccRegisters(); //checks if accelerometer is looking up, ToF/Sapphire is looking down
   Serial.println("Exiting Setup");
 }
 
 void loop()
 {
   uint8_t dataRead;
-  myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);//cleared by reading
-
-  
-  if (dataRead & 0x20) //device is looking up!
+  myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC); //cleared by reading
+  if (dataRead & 0x20) // if device is inside container and looking down
   {
-    Serial.println("device is looking down!   "); //  "Z high"
+    Serial.println("device is inside container looking down!   "); //  "Z high"
     if (!stableD)
     {
       // measure some distances :)
       init_sensor();
       read_v = sensor.readRangeSingleMillimeters();
-      
+
       stableD  = distances(read_v);
       Serial.print(read_v);
       Serial.print("    -  ");
@@ -83,11 +89,12 @@ void loop()
     }
     else
     {
-      Serial.println("== Searching for WiFi... =="); 
+      Serial.println("== Searching for WiFi... ==");
       delay(500);
       if ((WiFiMulti.run() == WL_CONNECTED)) // wait for WiFi connection
       {
-        Serial.println("CONNECTED"); full_blink(); // blink if connected
+        Serial.println("CONNECTED");
+        full_blink(); // blink if connected
 
         // generate uniq ID for device registration and sent to the server.
         String message = device_reg_json(String(ESP.getChipId()));
@@ -102,7 +109,7 @@ void loop()
         // sent distance and percentage to the server:
         message = sent_data_json(String(ESP.getChipId()), read_v, percent);
         //Serial.println(message);
-        blink_level( percent  );  // blink the LED with respect to percentage of jar.
+        //blink_level( percent  );  // blink the LED with respect to percentage of jar.
 
 
         Serial.println(" \n\n\n\n\n --------- ");
@@ -112,23 +119,22 @@ void loop()
           configAccIntterupts_wake();
 
           Serial.println("Going into deep sleep");
-          delay(2000);
-          ESP.deepSleep(5e6); // u secends // equals to 5 sec
+          delay(1000);
+          ESP.deepSleep(0); // we are using 0 because we are using acc interrupt not gpio16
+          delay(200);
 
           // since we are not using wake up from timer, esp will wait for acc interrupt
           // it will fire only when the device is upside down
 
         }
         else Serial.println(" CLOUD CONNECTION ERROR!!! MARK, WHATS GOING ON MAN :D");
-
       }
     }
   }
-  else Serial.println(" Please put me back to the jar !!!");
-
-
+  else Serial.println("I am outside the container, looking up or to the side.");
 }
 
+// *****************************************************************************************
 
 
 
@@ -176,8 +182,8 @@ void init_accel()
   myIMU.readRegister(&dataRead, LIS3DH_INT1_SRC);   //cleared by reading
 }
 
-
-void configAccIntterupts_lookUp()
+// enables register that indicates that the accelerometer is looking up, meaning ToF/Sapphire is looking down
+void configAccRegisters()
 {
   uint8_t dataToWrite = 0;
 
@@ -284,7 +290,7 @@ void configAccIntterupts_lookUp()
   //dataToWrite |= 0x80; //Click int on pin 2
   //dataToWrite |= 0x40; //Generator 1 interrupt on pin 2
   //dataToWrite |= 0x10; //boot status on pin 2
- // dataToWrite |= 0x02; //invert both outputs
+  // dataToWrite |= 0x02; //invert both outputs
   myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
 
 }
@@ -292,7 +298,7 @@ void configAccIntterupts_lookUp()
 
 //////////////////////////////////////////////////////////////////
 
-
+// sets accelerometer to fire the interrupt whenever the device is looking up
 void configAccIntterupts_wake()
 {
   uint8_t dataToWrite = 0;
@@ -400,7 +406,7 @@ void configAccIntterupts_wake()
   //dataToWrite |= 0x80; //Click int on pin 2
   //dataToWrite |= 0x40; //Generator 1 interrupt on pin 2
   //dataToWrite |= 0x10; //boot status on pin 2
- // dataToWrite |= 0x02; //invert both outputs
+  // dataToWrite |= 0x02; //invert both outputs
   myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
 
 }

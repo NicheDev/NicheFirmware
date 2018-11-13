@@ -9,13 +9,14 @@ void setup()
   while(!Serial) { }
   
   Serial.println("I'm awake.");
+  delay(4000);
 
 }
 
 void loop() 
 {
   Serial.println("Going into deep sleep for 5 seconds");
-  ESP.deepSleep(10e6); // usecends
+  ESP.deepSleep(0); // usecends
   Serial.println("Deep Sleep is Over");
   
 }
