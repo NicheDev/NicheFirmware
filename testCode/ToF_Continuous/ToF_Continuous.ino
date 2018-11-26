@@ -11,7 +11,7 @@ VL53L0X sensor;
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Wire.begin();
 
   sensor.init();
@@ -28,6 +28,7 @@ void loop()
 {
   Serial.print(sensor.readRangeContinuousMillimeters());
   if (sensor.timeoutOccurred()) { Serial.print(" TIMEOUT"); }
-
   Serial.println();
+  delay(100);
+  Serial.println("------");
 }

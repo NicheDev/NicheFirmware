@@ -13,7 +13,7 @@
 #include <VL53L0X.h>              // ToF sensor
 #include "Wire.h"                 // I2c library
 
-LIS3DH myIMU(I2C_MODE, 0x18); //Default constructor is I2C, addr 0x19.
+LIS3DH myIMU(I2C_MODE, 0x19); //Default constructor is I2C, addr 0x19.
 ESP8266WiFiMulti WiFiMulti;
 VL53L0X sensor;
 
@@ -25,7 +25,7 @@ const int RED = 12;
 const int GREEN = 13;
 const int BLUE = 14;
 //const int ToF_Xshut = 9;
-const int jar_type1 = 191;  //empty jar length in mm
+const int jar_type1 = 105;  //empty jar length in mm
 String sss;
 
 // global variables for sensors
@@ -150,7 +150,7 @@ bool distances(int dist)
   d1 = d2;
   d2 = dist;
 
-  if (abs(d0 - d1) < 5 && abs(d0 - d2) < 5 && abs(d1 - d2) < 5 && dist < jar_type1 && dist != 65535) return true;
+  if (abs(d0 - d1) < 5 && abs(d0 - d2) < 5 && abs(d1 - d2) < 5 && dist < (jar_type1*1.2) && dist != 65535) return true;
   else return false;
 }
 

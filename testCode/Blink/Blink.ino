@@ -1,33 +1,37 @@
 /*
-  ESP8266 Blink by Simon Peter
-  Blink the blue LED on the ESP-01 module
-  This example code is in the public domain
+  Blink
 
-  The blue LED on the ESP-01 module is connected to GPIO1
-  (which is also the TXD pin; so we cannot use Serial.print() at the same time)
+  Turns an LED on for one second, then off for one second, repeatedly.
 
-  Note that this sketch uses LED_BUILTIN to find the pin with the internal LED
+  Most Arduinos have an on-board LED you can control. On the UNO, MEGA and ZERO
+  it is attached to digital pin 13, on MKR1000 on pin 6. LED_BUILTIN is set to
+  the correct LED pin independent of which board is used.
+  If you want to know what pin the on-board LED is connected to on your Arduino
+  model, check the Technical Specs of your board at:
+  https://www.arduino.cc/en/Main/Products
+
+  modified 8 May 2014
+  by Scott Fitzgerald
+  modified 2 Sep 2016
+  by Arturo Guadalupi
+  modified 8 Sep 2016
+  by Colby Newman
+
+  This example code is in the public domain.
+
+  http://www.arduino.cc/en/Tutorial/Blink
 */
 
-//int ledPin = LED_BUILTIN;
-int ledPin = 10;
-
-
+// the setup function runs once when you press reset or power the board
 void setup() {
- // pinMode(ledPin, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
-  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
-
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 // the loop function runs over and over again forever
 void loop() {
-//  digitalWrite(ledPin, LOW);   // Turn the LED on (Note that LOW is the voltage level
-  digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
-
-  // but actually the LED is on; this is because
-  // it is active low on the ESP-01)
-  delay(6000);                      // Wait for a second
-//  digitalWrite(ledPin, HIGH);  // Turn the LED off by making the voltage HIGH
-  digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off by making the voltage HIGH
-  delay(6000);                      // Wait for two seconds (to demonstrate the active low LED)
+  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);                       // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000);                       // wait for a second
 }
